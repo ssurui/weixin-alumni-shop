@@ -1,0 +1,29 @@
+{
+  "name": "weixin-p1-miniprogram",
+  "version": "1.0.0",
+  "description": "校庆纪念品认购私域微信小程序",
+  "scripts": {
+    "dev:weapp": "taro build --type weapp --watch",
+    "build:weapp": "taro build --type weapp",
+    "dev:h5": "taro build --type h5 --watch",
+    "build:h5": "taro build --type h5"
+  },
+  "dependencies": {
+    "@tarojs/components": "4.x",
+    "@tarojs/runtime": "4.x",
+    "@tarojs/taro": "4.x",
+    "@tarojs/plugin-framework-vue3": "4.x",
+    "vue": "^3.4.0",
+    "pinia": "^2.1.0",
+    "@vant/weapp": "^1.10.0",
+    "dayjs": "^1.11.0",
+    "decimal.js": "^10.4.0"
+  },
+  "devDependencies": {
+    "@tarojs/cli": "4.x",
+    "@tarojs/webpack5-runner": "4.x",
+    "@types/vue": "^3.0.0",
+    "typescript": "^5.0.0",
+    "vue-tsc": "^2.0.0"
+  }
+}

@@ -1,0 +1,643 @@
+// Prisma schema for 校庆纪念品认购私域微信小程序
+// 共28张表，对应详细设计.md
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// 1. users 用户表
+model User {
+  id          BigInt    @id @default(autoincrement())
+  openid      String    @unique @db.VarChar(64)
+  unionId     String?   @map("union_id") @db.VarChar(64)
+  nickname    String?   @db.VarChar(100)
+  avatarUrl   String?   @map("avatar_url") @db.VarChar(500)
+  phone       String?   @db.VarChar(20)
+  countryCode String    @default("+86") @map("country_code") @db.VarChar(10)
+  isOverseas  Boolean   @default(false) @map("is_overseas")
+  isVerified  Boolean   @default(false) @map("is_verified")
+  status      Int       @default(1) @db.TinyInt
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  alumniVerifications AlumniVerification[]
+  addresses           Address[]
+  cart                Cart?
+  orders              Order[]
+  payments            Payment[]
+  customizations      Customization[]
+  reviews             Review[]
+  notifications       Notification[]
+  afterSales          AfterSale[]
+
+  @@index([unionId], map: "idx_union_id")
+  @@map("users")
+}
+
+// 2. alumni_verifications 校友认证表
+model AlumniVerification {
+  id             BigInt    @id @default(autoincrement())
+  userId         BigInt    @map("user_id")
+  realName       String    @map("real_name") @db.VarChar(100)
+  studentId      String?   @map("student_id") @db.VarChar(50)
+  graduationYear Int?      @map("graduation_year")
+  major          String?   @db.VarChar(100)
+  proofImageUrl  String?   @map("proof_image_url") @db.VarChar(500)
+  status         VerificationStatus @default(pending)
+  reviewerId     BigInt?   @map("reviewer_id")
+  reviewRemark   String?   @map("review_remark") @db.VarChar(500)
+  reviewedAt     DateTime? @map("reviewed_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  user     User   @relation(fields: [userId], references: [id])
+  reviewer Admin? @relation(fields: [reviewerId], references: [id])
+
+  @@index([userId], map: "idx_user_id")
+  @@index([status], map: "idx_status")
+  @@index([studentId], map: "idx_student_id")
+  @@map("alumni_verifications")
+}
+
+enum VerificationStatus {
+  pending
+  approved
+  rejected
+}
+
+// 3. product_categories 商品分类表
+model ProductCategory {
+  id        BigInt    @id @default(autoincrement())
+  name      String    @db.VarChar(100)
+  parentId  BigInt?   @map("parent_id")
+  iconUrl   String?   @map("icon_url") @db.VarChar(500)
+  sortOrder Int       @default(0) @map("sort_order")
+  status    Int       @default(1) @db.TinyInt
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  parent   ProductCategory?  @relation("CategoryParent", fields: [parentId], references: [id])
+  children ProductCategory[] @relation("CategoryParent")
+  products Product[]
+
+  @@index([parentId], map: "idx_parent_id")
+  @@map("product_categories")
+}
+
+// 4. products 商品表
+model Product {
+  id             BigInt    @id @default(autoincrement())
+  name           String    @db.VarChar(200)
+  nameEn         String?   @map("name_en") @db.VarChar(200)
+  description    String?   @db.Text
+  detailHtml     String?   @map("detail_html") @db.LongText
+  categoryId     BigInt?   @map("category_id")
+  coverImage     String?   @map("cover_image") @db.VarChar(500)
+  price          Decimal   @db.Decimal(10, 2)
+  stock          Int       @default(0)
+  salesCount     Int       @default(0) @map("sales_count")
+  isCustomizable Boolean   @default(false) @map("is_customizable")
+  status         ProductStatus @default(draft)
+  sortOrder      Int       @default(0) @map("sort_order")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  category       ProductCategory? @relation(fields: [categoryId], references: [id])
+  skus           ProductSku[]
+  images         ProductImage[]
+  cartItems      CartItem[]
+  orderItems     OrderItem[]
+  customizations Customization[]
+  reviews        Review[]
+
+  @@index([categoryId], map: "idx_category_id")
+  @@index([status], map: "idx_status")
+  @@index([sortOrder], map: "idx_sort_order")
+  @@map("products")
+}
+
+enum ProductStatus {
+  draft
+  published
+  unpublished
+}
+
+// 5. product_skus 商品SKU表
+model ProductSku {
+  id         BigInt   @id @default(autoincrement())
+  productId  BigInt   @map("product_id")
+  skuCode    String   @unique @map("sku_code") @db.VarChar(100)
+  specValues Json?    @map("spec_values")
+  price      Decimal  @db.Decimal(10, 2)
+  stock      Int      @default(0)
+  imageUrl   String?  @map("image_url") @db.VarChar(500)
+  status     Int      @default(1) @db.TinyInt
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  product    Product    @relation(fields: [productId], references: [id])
+  cartItems  CartItem[]
+  orderItems OrderItem[]
+
+  @@index([productId], map: "idx_product_id")
+  @@map("product_skus")
+}
+
+// 6. product_images 商品图片表
+model ProductImage {
+  id        BigInt   @id @default(autoincrement())
+  productId BigInt   @map("product_id")
+  imageUrl  String   @map("image_url") @db.VarChar(500)
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  product Product @relation(fields: [productId], references: [id])
+
+  @@index([productId], map: "idx_product_id")
+  @@map("product_images")
+}
+
+// 7. addresses 收货地址表
+model Address {
+  id           BigInt   @id @default(autoincrement())
+  userId       BigInt   @map("user_id")
+  receiverName String   @map("receiver_name") @db.VarChar(100)
+  phone        String   @db.VarChar(20)
+  country      String   @default("中国") @db.VarChar(100)
+  province     String?  @db.VarChar(100)
+  city         String?  @db.VarChar(100)
+  district     String?  @db.VarChar(100)
+  detail       String   @db.VarChar(500)
+  postalCode   String?  @map("postal_code") @db.VarChar(20)
+  isDefault    Boolean  @default(false) @map("is_default")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  user   User    @relation(fields: [userId], references: [id])
+  orders Order[]
+
+  @@index([userId], map: "idx_user_id")
+  @@map("addresses")
+}
+
+// 8. carts 购物车表
+model Cart {
+  id        BigInt     @id @default(autoincrement())
+  userId    BigInt     @unique @map("user_id")
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+
+  user  User       @relation(fields: [userId], references: [id])
+  items CartItem[]
+
+  @@map("carts")
+}
+
+// 9. cart_items 购物车明细表
+model CartItem {
+  id                BigInt   @id @default(autoincrement())
+  cartId            BigInt   @map("cart_id")
+  productId         BigInt   @map("product_id")
+  skuId             BigInt   @map("sku_id")
+  quantity          Int      @default(1)
+  customizationText String?  @map("customization_text") @db.VarChar(200)
+  selectedFont      String?  @map("selected_font") @db.VarChar(50)
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  cart    Cart       @relation(fields: [cartId], references: [id])
+  product Product    @relation(fields: [productId], references: [id])
+  sku     ProductSku @relation(fields: [skuId], references: [id])
+
+  @@unique([cartId, skuId], map: "uniq_cart_sku")
+  @@index([cartId], map: "idx_cart_id")
+  @@map("cart_items")
+}
+
+// 10. orders 订单主表
+model Order {
+  id              BigInt      @id @default(autoincrement())
+  orderNo         String      @unique @map("order_no") @db.VarChar(32)
+  userId          BigInt      @map("user_id")
+  totalAmount     Decimal     @map("total_amount") @db.Decimal(10, 2)
+  currency        String      @default("CNY") @db.VarChar(10)
+  exchangeRate    Decimal?    @map("exchange_rate") @db.Decimal(10, 4)
+  addressId       BigInt?     @map("address_id")
+  addressSnapshot Json?       @map("address_snapshot")
+  status          OrderStatus @default(pending_payment)
+  paymentMethod   PaymentMethod? @map("payment_method")
+  paymentId       BigInt?     @map("payment_id")
+  remark          String?     @db.VarChar(500)
+  cancelReason    String?     @map("cancel_reason") @db.VarChar(200)
+  expiresAt       DateTime?   @map("expires_at")
+  createdAt       DateTime    @default(now()) @map("created_at")
+  updatedAt       DateTime    @updatedAt @map("updated_at")
+
+  user       User        @relation(fields: [userId], references: [id])
+  address    Address?    @relation(fields: [addressId], references: [id])
+  items      OrderItem[]
+  payments   Payment[]
+  logistics  Logistics?
+  afterSales AfterSale[]
+  reviews    Review[]
+
+  @@index([userId], map: "idx_user_id")
+  @@index([status], map: "idx_status")
+  @@index([expiresAt], map: "idx_expires_at")
+  @@map("orders")
+}
+
+enum OrderStatus {
+  pending_payment
+  paid
+  processing
+  shipped
+  completed
+  cancelled
+  refunding
+  refunded
+}
+
+enum PaymentMethod {
+  wechat
+  paypal
+}
+
+// 11. order_items 订单明细表
+model OrderItem {
+  id              BigInt   @id @default(autoincrement())
+  orderId         BigInt   @map("order_id")
+  productId       BigInt   @map("product_id")
+  skuId           BigInt   @map("sku_id")
+  productSnapshot Json?    @map("product_snapshot")
+  skuSnapshot     Json?    @map("sku_snapshot")
+  quantity        Int
+  unitPrice       Decimal  @map("unit_price") @db.Decimal(10, 2)
+  subtotal        Decimal  @db.Decimal(10, 2)
+  customizationId BigInt?  @map("customization_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  order         Order          @relation(fields: [orderId], references: [id])
+  product       Product        @relation(fields: [productId], references: [id])
+  sku           ProductSku     @relation(fields: [skuId], references: [id])
+  customization Customization? @relation(fields: [customizationId], references: [id])
+  review        Review?
+  afterSale     AfterSale?     @relation(fields: [id], references: [orderItemId])
+
+  @@index([orderId], map: "idx_order_id")
+  @@map("order_items")
+}
+
+// 12. customizations 刻字定制表
+model Customization {
+  id               BigInt              @id @default(autoincrement())
+  userId           BigInt              @map("user_id")
+  productId        BigInt              @map("product_id")
+  textContent      String              @map("text_content") @db.VarChar(200)
+  fontName         String?             @map("font_name") @db.VarChar(50)
+  previewImageUrl  String?             @map("preview_image_url") @db.VarChar(500)
+  status           CustomizationStatus @default(draft)
+  createdAt        DateTime            @default(now()) @map("created_at")
+  updatedAt        DateTime            @updatedAt @map("updated_at")
+
+  user       User        @relation(fields: [userId], references: [id])
+  product    Product     @relation(fields: [productId], references: [id])
+  orderItems OrderItem[]
+
+  @@index([userId], map: "idx_user_id")
+  @@map("customizations")
+}
+
+enum CustomizationStatus {
+  draft
+  confirmed
+}
+
+// 13. payments 支付记录表
+model Payment {
+  id              BigInt        @id @default(autoincrement())
+  paymentNo       String        @unique @map("payment_no") @db.VarChar(64)
+  orderId         BigInt        @map("order_id")
+  userId          BigInt        @map("user_id")
+  amount          Decimal       @db.Decimal(10, 2)
+  currency        String        @db.VarChar(10)
+  exchangeRate    Decimal?      @map("exchange_rate") @db.Decimal(10, 4)
+  method          PaymentMethod
+  status          PaymentStatus @default(pending)
+  wxTransactionId String?       @map("wx_transaction_id") @db.VarChar(64)
+  wxPrepayId      String?       @map("wx_prepay_id") @db.VarChar(64)
+  paypalOrderId   String?       @map("paypal_order_id") @db.VarChar(100)
+  paypalCaptureId String?       @map("paypal_capture_id") @db.VarChar(100)
+  paidAt          DateTime?     @map("paid_at")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+
+  order Order @relation(fields: [orderId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
+
+  @@index([orderId], map: "idx_order_id")
+  @@index([wxTransactionId], map: "idx_wx_transaction_id")
+  @@index([paypalOrderId], map: "idx_paypal_order_id")
+  @@map("payments")
+}
+
+enum PaymentStatus {
+  pending
+  success
+  failed
+  refunded
+}
+
+// 14. logistics 物流信息表
+model Logistics {
+  id          BigInt          @id @default(autoincrement())
+  orderId     BigInt          @unique @map("order_id")
+  company     String          @db.VarChar(100)
+  trackingNo  String          @map("tracking_no") @db.VarChar(100)
+  status      LogisticsStatus @default(pending)
+  trackingData Json?          @map("tracking_data")
+  shippedAt   DateTime?       @map("shipped_at")
+  deliveredAt DateTime?       @map("delivered_at")
+  createdAt   DateTime        @default(now()) @map("created_at")
+  updatedAt   DateTime        @updatedAt @map("updated_at")
+
+  order Order @relation(fields: [orderId], references: [id])
+
+  @@index([trackingNo], map: "idx_tracking_no")
+  @@map("logistics")
+}
+
+enum LogisticsStatus {
+  pending
+  shipping
+  delivered
+}
+
+// 15. after_sales 售后申请表
+model AfterSale {
+  id           BigInt          @id @default(autoincrement())
+  afterSaleNo  String          @unique @map("after_sale_no") @db.VarChar(32)
+  orderId      BigInt          @map("order_id")
+  orderItemId  BigInt?         @map("order_item_id")
+  userId       BigInt          @map("user_id")
+  type         AfterSaleType
+  reason       String          @db.VarChar(500)
+  images       Json?
+  status       AfterSaleStatus @default(pending)
+  reviewerId   BigInt?         @map("reviewer_id")
+  reviewRemark String?         @map("review_remark") @db.VarChar(500)
+  refundAmount Decimal?        @map("refund_amount") @db.Decimal(10, 2)
+  refundAt     DateTime?       @map("refund_at")
+  createdAt    DateTime        @default(now()) @map("created_at")
+  updatedAt    DateTime        @updatedAt @map("updated_at")
+
+  order    Order  @relation(fields: [orderId], references: [id])
+  user     User   @relation(fields: [userId], references: [id])
+  reviewer Admin? @relation(fields: [reviewerId], references: [id])
+  orderItem OrderItem? @relation(fields: [orderItemId], references: [id])
+
+  @@index([orderId], map: "idx_order_id")
+  @@index([userId], map: "idx_user_id")
+  @@index([status], map: "idx_status")
+  @@map("after_sales")
+}
+
+enum AfterSaleType {
+  refund
+  return
+  exchange
+}
+
+enum AfterSaleStatus {
+  pending
+  approved
+  rejected
+  completed
+}
+
+// 16. reviews 商品评价表
+model Review {
+  id          BigInt   @id @default(autoincrement())
+  orderId     BigInt   @map("order_id")
+  orderItemId BigInt   @unique @map("order_item_id")
+  userId      BigInt   @map("user_id")
+  productId   BigInt   @map("product_id")
+  rating      Int      @db.TinyInt
+  content     String?  @db.VarChar(1000)
+  isAnonymous Boolean  @default(false) @map("is_anonymous")
+  status      Int      @default(1) @db.TinyInt
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  order     Order         @relation(fields: [orderId], references: [id])
+  orderItem OrderItem     @relation(fields: [orderItemId], references: [id])
+  user      User          @relation(fields: [userId], references: [id])
+  product   Product       @relation(fields: [productId], references: [id])
+  images    ReviewImage[]
+
+  @@index([productId], map: "idx_product_id")
+  @@index([userId], map: "idx_user_id")
+  @@index([orderId], map: "idx_order_id")
+  @@map("reviews")
+}
+
+// 17. review_images 评价图片表
+model ReviewImage {
+  id        BigInt   @id @default(autoincrement())
+  reviewId  BigInt   @map("review_id")
+  imageUrl  String   @map("image_url") @db.VarChar(500)
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  review Review @relation(fields: [reviewId], references: [id])
+
+  @@index([reviewId], map: "idx_review_id")
+  @@map("review_images")
+}
+
+// 18. notifications 消息通知表
+model Notification {
+  id        BigInt   @id @default(autoincrement())
+  userId    BigInt   @map("user_id")
+  type      String   @db.VarChar(50)
+  title     String   @db.VarChar(200)
+  content   String?  @db.Text
+  extraData Json?    @map("extra_data")
+  isRead    Boolean  @default(false) @map("is_read")
+  readAt    DateTime? @map("read_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId], map: "idx_user_id")
+  @@index([isRead], map: "idx_is_read")
+  @@map("notifications")
+}
+
+// 19. admins 管理员表
+model Admin {
+  id           BigInt    @id @default(autoincrement())
+  username     String    @unique @db.VarChar(50)
+  passwordHash String    @map("password_hash") @db.VarChar(255)
+  realName     String?   @map("real_name") @db.VarChar(100)
+  email        String?   @db.VarChar(200)
+  phone        String?   @db.VarChar(20)
+  lastLoginAt  DateTime? @map("last_login_at")
+  status       Int       @default(1) @db.TinyInt
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  adminRoles          AdminRole[]
+  alumniReviews       AlumniVerification[]
+  afterSaleReviews    AfterSale[]
+
+  @@map("admins")
+}
+
+// 20. roles 角色表
+model Role {
+  id          BigInt   @id @default(autoincrement())
+  name        String   @unique @db.VarChar(100)
+  displayName String?  @map("display_name") @db.VarChar(200)
+  description String?  @db.VarChar(500)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  rolePermissions RolePermission[]
+  adminRoles      AdminRole[]
+
+  @@map("roles")
+}
+
+// 21. permissions 权限表
+model Permission {
+  id          BigInt   @id @default(autoincrement())
+  name        String   @unique @db.VarChar(100)
+  displayName String?  @map("display_name") @db.VarChar(200)
+  module      String?  @db.VarChar(50)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  rolePermissions RolePermission[]
+
+  @@map("permissions")
+}
+
+// 22. role_permissions 角色权限关联表
+model RolePermission {
+  roleId       BigInt @map("role_id")
+  permissionId BigInt @map("permission_id")
+
+  role       Role       @relation(fields: [roleId], references: [id])
+  permission Permission @relation(fields: [permissionId], references: [id])
+
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+// 23. admin_roles 管理员角色关联表
+model AdminRole {
+  adminId BigInt @map("admin_id")
+  roleId  BigInt @map("role_id")
+
+  admin Admin @relation(fields: [adminId], references: [id])
+  role  Role  @relation(fields: [roleId], references: [id])
+
+  @@id([adminId, roleId])
+  @@map("admin_roles")
+}
+
+// 24. banners Banner配置表
+model Banner {
+  id        BigInt     @id @default(autoincrement())
+  title     String?    @db.VarChar(200)
+  imageUrl  String     @map("image_url") @db.VarChar(500)
+  linkType  BannerLinkType @default(none) @map("link_type")
+  linkValue String?    @map("link_value") @db.VarChar(500)
+  sortOrder Int        @default(0) @map("sort_order")
+  status    Int        @default(1) @db.TinyInt
+  startAt   DateTime?  @map("start_at")
+  endAt     DateTime?  @map("end_at")
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+
+  @@map("banners")
+}
+
+enum BannerLinkType {
+  product
+  url
+  none
+}
+
+// 25. announcements 公告表
+model Announcement {
+  id          BigInt           @id @default(autoincrement())
+  title       String           @db.VarChar(200)
+  content     String           @db.Text
+  type        AnnouncementType @default(normal)
+  status      Int              @default(1) @db.TinyInt
+  publishedAt DateTime?        @map("published_at")
+  expiresAt   DateTime?        @map("expires_at")
+  createdAt   DateTime         @default(now()) @map("created_at")
+  updatedAt   DateTime         @updatedAt @map("updated_at")
+
+  @@map("announcements")
+}
+
+enum AnnouncementType {
+  normal
+  important
+  urgent
+}
+
+// 26. system_settings 系统配置表
+model SystemSetting {
+  id          BigInt   @id @default(autoincrement())
+  key         String   @unique @db.VarChar(100)
+  value       String?  @db.Text
+  description String?  @db.VarChar(500)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("system_settings")
+}
+
+// 27. exchange_rates 汇率记录表
+model ExchangeRate {
+  id           BigInt   @id @default(autoincrement())
+  fromCurrency String   @map("from_currency") @db.VarChar(10)
+  toCurrency   String   @map("to_currency") @db.VarChar(10)
+  rate         Decimal  @db.Decimal(10, 6)
+  source       String   @db.VarChar(50)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([fromCurrency, toCurrency, createdAt], map: "idx_currencies_created")
+  @@map("exchange_rates")
+}
+
+// 28. report_schedules 报表邮件计划表
+model ReportSchedule {
+  id          BigInt         @id @default(autoincrement())
+  name        String         @db.VarChar(200)
+  type        ReportType
+  recipients  Json
+  reportTypes Json           @map("report_types")
+  isEnabled   Boolean        @default(true) @map("is_enabled")
+  lastSentAt  DateTime?      @map("last_sent_at")
+  nextSendAt  DateTime       @map("next_send_at")
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
+
+  @@map("report_schedules")
+}
+
+enum ReportType {
+  daily
+  weekly
+  monthly
+}

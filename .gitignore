@@ -1,0 +1,36 @@
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 环境变量（含敏感信息，不提交）
+.env
+.env.local
+.env.*.local
+
+# 编译输出
+dist/
+build/
+
+# Prisma
+backend/prisma/migrations/dev.db
+
+# 日志
+*.log
+logs/
+
+# macOS
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# Jest 覆盖率报告
+coverage/
+
+# Taro 编译产物
+miniprogram/dist/
+miniprogram/.taro/
