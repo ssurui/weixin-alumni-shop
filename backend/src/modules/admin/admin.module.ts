@@ -1,4 +1,6 @@
 import { Module } from '@nestjs/common';
+import { JwtModule } from '@nestjs/jwt';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AdminController } from './admin.controller';
 import { AdminService } from './admin.service';
 import { AdminAlumniController } from './alumni/alumni.controller';
@@ -13,6 +15,16 @@ import { AdminSettingsController } from './settings/settings.controller';
 import { AdminSettingsService } from './settings/settings.service';
 
 @Module({
+  imports: [
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      useFactory: (config: ConfigService) => ({
+        secret: config.get('JWT_SECRET'),
+        signOptions: { expiresIn: config.get('JWT_EXPIRES_IN', '7d') },
+      }),
+      inject: [ConfigService],
+    }),
+  ],
   controllers: [
     AdminController,
     AdminAlumniController,

@@ -24,16 +24,19 @@ export default defineConfig<'webpack5'>(async (merge, { command, mode }) => {
     sourceRoot: 'src',
     outputRoot: 'dist',
     plugins: [
-      '@tarojs/plugin-framework-vue3',
+      ['@tarojs/plugin-framework-vue3', {
+        vueOptions: {
+          compilerOptions: {
+            isCustomElement: (tag: string) => tag.startsWith('van-'),
+          },
+        },
+      }],
       '@tarojs/plugin-platform-weapp',
     ],
     alias: {
       '@': path.resolve(__dirname, '..', 'src'),
     },
     defineConstants: {
-      'process.env.TARO_APP_API_URL': JSON.stringify(
-        process.env.TARO_APP_API_URL || 'https://api.example.com/api/v1'
-      ),
       'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
       __VUE_OPTIONS_API__: 'true',
       __VUE_PROD_DEVTOOLS__: 'false',

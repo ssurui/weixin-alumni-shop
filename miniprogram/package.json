@@ -21,6 +21,7 @@
   },
   "devDependencies": {
     "@tarojs/cli": "4.x",
+    "@tarojs/plugin-platform-h5": "^4.1.11",
     "@tarojs/plugin-platform-weapp": "^4.1.11",
     "@tarojs/webpack5-runner": "4.x",
     "@vue/babel-plugin-jsx": "^1.5.0",

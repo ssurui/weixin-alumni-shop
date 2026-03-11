@@ -4,6 +4,11 @@ import { AppModule } from './app.module';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 
+// BigInt JSON 序列化支持
+(BigInt.prototype as any).toJSON = function () {
+  return this.toString();
+};
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 

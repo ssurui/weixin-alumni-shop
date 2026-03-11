@@ -21,6 +21,17 @@ export class AfterSalesService {
       where: { id: BigInt(dto.orderId), userId },
     });
     if (!order) throw new NotFoundException('订单不存在');
+
+    // 检查是否重复申请（优先于状态检查，返回正确的409）
+    const existing = await this.prisma.afterSale.findFirst({
+      where: {
+        orderId: BigInt(dto.orderId),
+        userId,
+        status: { in: ['pending', 'approved'] },
+      },
+    });
+    if (existing) throw new ConflictException('已存在进行中的售后申请');
+
     if (!['completed', 'shipped'].includes(order.status)) {
       throw new BadRequestException('当前订单状态不支持申请售后');
     }
@@ -32,16 +43,6 @@ export class AfterSalesService {
         throw new BadRequestException(`售后申请已超过${AFTER_SALE_DAYS}天时限`);
       }
     }
-
-    // 检查是否重复申请
-    const existing = await this.prisma.afterSale.findFirst({
-      where: {
-        orderId: BigInt(dto.orderId),
-        userId,
-        status: { in: ['pending', 'approved'] },
-      },
-    });
-    if (existing) throw new ConflictException('已存在进行中的售后申请');
 
     // 生成售后编号
     const afterSaleNo = `AS${Date.now()}`;

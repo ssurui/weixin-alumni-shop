@@ -17,7 +17,14 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: { sub: string; openid: string }) {
+  async validate(payload: { sub: string; openid?: string; isAdmin?: boolean; roles?: string[] }) {
+    if (payload.isAdmin) {
+      const admin = await this.authService.findAdminById(BigInt(payload.sub));
+      if (!admin || admin.status !== 1) {
+        throw new UnauthorizedException('管理员不存在或已被禁用');
+      }
+      return { ...admin, roles: payload.roles || [] };
+    }
     const user = await this.authService.findUserById(BigInt(payload.sub));
     if (!user || user.status === 0) {
       throw new UnauthorizedException('用户不存在或已被禁用');

@@ -52,7 +52,7 @@ describe('OrderTimeoutService', () => {
     inventoryService = module.get(InventoryService);
 
     const Redis = require('ioredis');
-    mockRedis = Redis.mock.instances[0];
+    mockRedis = Redis.mock.results[Redis.mock.results.length - 1].value;
   });
 
   describe('enqueueTimeout', () => {

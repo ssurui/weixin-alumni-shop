@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
-import * as request from 'supertest';
+import request from 'supertest';
 import nock from 'nock';
 import { AppModule } from '../../src/app.module';
 import { PrismaService } from '../../src/prisma/prisma.service';
@@ -79,6 +79,7 @@ describe('ReviewsController (e2e) - TC-090~096', () => {
 
   afterAll(async () => {
     nock.cleanAll();
+    await prisma.$executeRawUnsafe('SET FOREIGN_KEY_CHECKS=0');
     await prisma.$executeRawUnsafe('DELETE FROM review_images');
     await prisma.$executeRawUnsafe('DELETE FROM reviews');
     await prisma.$executeRawUnsafe('DELETE FROM order_items');

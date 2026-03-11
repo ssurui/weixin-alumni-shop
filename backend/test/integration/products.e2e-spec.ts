@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
-import * as request from 'supertest';
+import request from 'supertest';
 import { AppModule } from '../../src/app.module';
 import { PrismaService } from '../../src/prisma/prisma.service';
 import { ResponseInterceptor } from '../../src/common/interceptors/response.interceptor';
@@ -50,6 +50,7 @@ describe('ProductsController (e2e) - TC-020~024', () => {
   });
 
   afterAll(async () => {
+    await prisma.$executeRawUnsafe('SET FOREIGN_KEY_CHECKS=0');
     await prisma.$executeRawUnsafe('DELETE FROM product_skus WHERE sku_code LIKE "TEST_%"');
     await prisma.$executeRawUnsafe('DELETE FROM products WHERE name LIKE "测试%"');
     await app.close();

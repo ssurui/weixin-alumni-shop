@@ -3,7 +3,7 @@ import type { Config } from 'jest';
 const config: Config = {
   moduleFileExtensions: ['js', 'json', 'ts'],
   rootDir: '.',
-  testRegex: '.*\\.spec\\.ts$',
+  testRegex: '.*\\.(spec|e2e-spec)\\.ts$',
   transform: {
     '^.+\\.(t|j)s$': 'ts-jest',
   },
@@ -14,7 +14,7 @@ const config: Config = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
-  setupFilesAfterFramework: [],
+  setupFilesAfterEnv: ['<rootDir>/test/setup.ts'],
   globals: {
     'ts-jest': {
       tsconfig: 'tsconfig.json',

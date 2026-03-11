@@ -1,7 +1,7 @@
 /**
  * 管理员测试数据工厂
  */
-import { PrismaClient } from '@nestjs/testing';
+import { PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 
 export async function createAdmin(prisma: any, overrides: any = {}) {

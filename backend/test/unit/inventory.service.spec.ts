@@ -43,7 +43,7 @@ describe('InventoryService', () => {
 
     // 获取mock redis实例
     const Redis = require('ioredis');
-    mockRedis = Redis.mock.instances[0];
+    mockRedis = Redis.mock.results[Redis.mock.results.length - 1].value;
   });
 
   describe('deductStock', () => {

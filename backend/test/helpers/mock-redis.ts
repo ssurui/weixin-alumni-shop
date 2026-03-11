@@ -15,7 +15,7 @@ export function createMockRedisWithData(data: Record<string, string>) {
 
 // 创建支持 Lua 脚本的 Redis Mock（模拟库存扣减脚本）
 export class MockRedisWithLua extends RedisMock {
-  async eval(script: string, numkeys: number, ...args: string[]): Promise<any> {
+  async eval(script: string, numkeys: string | number, ...args: any[]): Promise<any> {
     const key = args[0];
     const quantity = parseInt(args[1]);
 

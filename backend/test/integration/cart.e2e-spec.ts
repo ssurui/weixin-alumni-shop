@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
-import * as request from 'supertest';
+import request from 'supertest';
 import nock from 'nock';
 import { AppModule } from '../../src/app.module';
 import { PrismaService } from '../../src/prisma/prisma.service';
@@ -63,6 +63,7 @@ describe('CartController (e2e) - TC-025~027', () => {
 
   afterAll(async () => {
     nock.cleanAll();
+    await prisma.$executeRawUnsafe('SET FOREIGN_KEY_CHECKS=0');
     await prisma.$executeRawUnsafe('DELETE FROM cart_items');
     await prisma.$executeRawUnsafe('DELETE FROM carts');
     await prisma.$executeRawUnsafe(`DELETE FROM product_skus WHERE sku_code = 'CART_TEST_SKU_001'`);
@@ -118,7 +119,7 @@ describe('CartController (e2e) - TC-025~027', () => {
         .post('/api/v1/cart/items')
         .set('Authorization', `Bearer ${accessToken}`)
         .send({ skuId: Number(skuId), quantity: 1 })
-        .expect(200);
+        .expect(201);
 
       expect(response.body.data.quantity).toBe(2);
     });

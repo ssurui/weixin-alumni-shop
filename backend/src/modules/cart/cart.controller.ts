@@ -1,6 +1,6 @@
 import {
   Controller, Get, Post, Put, Delete,
-  Body, Param, UseGuards, ParseIntPipe,
+  Body, Param, UseGuards, ParseIntPipe, HttpCode,
 } from '@nestjs/common';
 import { CartService } from './cart.service';
 import { AddToCartDto } from './dto/add-to-cart.dto';

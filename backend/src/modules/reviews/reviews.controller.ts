@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Query, UseGuards, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Query, UseGuards, ParseIntPipe, DefaultValuePipe } from '@nestjs/common';
 import { ReviewsService } from './reviews.service';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -22,8 +22,8 @@ export class ReviewsController {
   @Get('products/:productId')
   async getProductReviews(
     @Param('productId', ParseIntPipe) productId: number,
-    @Query('page') page: number = 1,
-    @Query('pageSize') pageSize: number = 10,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('pageSize', new DefaultValuePipe(10), ParseIntPipe) pageSize: number,
   ) {
     return this.reviewsService.getProductReviews(BigInt(productId), page, pageSize);
   }

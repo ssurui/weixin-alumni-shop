@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
-import * as request from 'supertest';
+import request from 'supertest';
 import nock from 'nock';
 import { AppModule } from '../../src/app.module';
 import { PrismaService } from '../../src/prisma/prisma.service';
@@ -33,6 +33,7 @@ describe('AuthController (e2e) - TC-001~012', () => {
 
   beforeEach(async () => {
     // 清理测试数据
+    await prisma.$executeRawUnsafe('SET FOREIGN_KEY_CHECKS=0');
     await prisma.$executeRawUnsafe('DELETE FROM alumni_verifications');
     await prisma.$executeRawUnsafe('DELETE FROM users');
   });

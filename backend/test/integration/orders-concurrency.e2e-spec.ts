@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
-import * as request from 'supertest';
+import request from 'supertest';
 import nock from 'nock';
 import { AppModule } from '../../src/app.module';
 import { PrismaService } from '../../src/prisma/prisma.service';
@@ -99,6 +99,7 @@ describe('Orders Concurrency (e2e) - TC-037', () => {
     expect(Number(updatedSku?.stock)).toBeGreaterThanOrEqual(0);
 
     // 清理
+    await prisma.$executeRawUnsafe('SET FOREIGN_KEY_CHECKS=0');
     await prisma.$executeRawUnsafe('DELETE FROM order_items');
     await prisma.$executeRawUnsafe(`DELETE FROM orders WHERE order_no LIKE 'XQ%'`);
     await prisma.$executeRawUnsafe(`DELETE FROM addresses WHERE receiver_name LIKE '用户%'`);

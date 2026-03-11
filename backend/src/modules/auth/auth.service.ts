@@ -31,17 +31,24 @@ export class AuthService {
     let openid: string;
     let unionId: string | undefined;
 
-    try {
-      const response = await axios.get(url);
-      const data = response.data;
-      if (data.errcode) {
-        throw new UnauthorizedException(`微信登录失败：${data.errmsg}`);
+    // 开发模式：未配置 AppID 时跳过微信 API，用 code 作为 openid
+    if (!appid || appid === 'undefined') {
+      console.warn('[WxLogin] 开发模式：未配置 WX_APPID，使用 code 作为 openid');
+      openid = `dev_${code}`;
+    } else {
+      try {
+        const response = await axios.get(url);
+        const data = response.data;
+        if (data.errcode) {
+          console.error('[WxLogin] 微信API错误:', data.errcode, data.errmsg);
+          throw new UnauthorizedException(`微信登录失败：${data.errmsg}`);
+        }
+        openid = data.openid;
+        unionId = data.unionid;
+      } catch (error) {
+        if (error instanceof UnauthorizedException) throw error;
+        throw new UnauthorizedException('微信登录请求失败');
       }
-      openid = data.openid;
-      unionId = data.unionid;
-    } catch (error) {
-      if (error instanceof UnauthorizedException) throw error;
-      throw new UnauthorizedException('微信登录请求失败');
     }
 
     // 查找或创建用户
@@ -147,6 +154,10 @@ export class AuthService {
   /**
    * 根据用户ID查找用户（供 JWT Strategy 使用）
    */
+  async findAdminById(id: bigint) {
+    return this.prisma.admin.findUnique({ where: { id } });
+  }
+
   async findUserById(id: bigint) {
     return this.prisma.user.findUnique({ where: { id } });
   }

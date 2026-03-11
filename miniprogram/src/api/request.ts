@@ -31,11 +31,16 @@ export async function request<T = any>(options: RequestOptions): Promise<T> {
     }
   }
 
+  // 过滤掉值为 undefined/null 的参数，避免发送 "undefined" 字符串
+  const cleanData = data
+    ? Object.fromEntries(Object.entries(data).filter(([, v]) => v !== undefined && v !== null))
+    : data
+
   try {
     const res = await Taro.request({
       url: `${BASE_URL}${url}`,
       method,
-      data,
+      data: cleanData,
       header,
     })
 

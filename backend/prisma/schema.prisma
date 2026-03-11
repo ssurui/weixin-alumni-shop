@@ -287,7 +287,7 @@ model OrderItem {
   sku           ProductSku     @relation(fields: [skuId], references: [id])
   customization Customization? @relation(fields: [customizationId], references: [id])
   review        Review?
-  afterSale     AfterSale?     @relation(fields: [id], references: [orderItemId])
+  afterSale     AfterSale?
 
   @@index([orderId], map: "idx_order_id")
   @@map("order_items")
@@ -383,7 +383,7 @@ model AfterSale {
   id           BigInt          @id @default(autoincrement())
   afterSaleNo  String          @unique @map("after_sale_no") @db.VarChar(32)
   orderId      BigInt          @map("order_id")
-  orderItemId  BigInt?         @map("order_item_id")
+  orderItemId  BigInt?         @unique @map("order_item_id")
   userId       BigInt          @map("user_id")
   type         AfterSaleType
   reason       String          @db.VarChar(500)
