@@ -5,6 +5,5 @@ export default definePageConfig({
     'van-cell-group': '@vant/weapp/cell-group/index',
     'van-icon': '@vant/weapp/icon/index',
     'van-button': '@vant/weapp/button/index',
-    'van-badge': '@vant/weapp/badge/index',
   },
 })

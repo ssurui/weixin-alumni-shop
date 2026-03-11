@@ -1,6 +1,6 @@
 <template>
   <view class="address-edit-page">
-    <van-form @submit="onSubmit" ref="formRef">
+    <view class="van-form" ref="formRef">
       <!-- 收货人 -->
       <van-cell-group inset class="form-group">
         <van-field
@@ -84,7 +84,7 @@
         <van-button
           type="primary"
           block
-          native-type="submit"
+          @tap="onSubmit"
           :loading="saving"
           loading-text="保存中..."
           class="save-btn"
@@ -92,7 +92,7 @@
           保存地址
         </van-button>
       </view>
-    </van-form>
+    </view>
   </view>
 </template>
 

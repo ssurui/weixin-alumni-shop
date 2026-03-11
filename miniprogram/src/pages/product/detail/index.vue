@@ -118,7 +118,7 @@
         <view class="action-item" @tap="goCart">
           <van-icon name="cart-o" size="48rpx" />
           <text>购物车</text>
-          <van-badge v-if="cartStore.totalCount > 0" :content="cartStore.totalCount" />
+          <van-info v-if="cartStore.totalCount > 0" :info="cartStore.totalCount" />
         </view>
         <van-button
           class="add-cart-btn"

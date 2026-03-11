@@ -1,9 +1,7 @@
 export default definePageConfig({
-  navigationBarTitleText: '申请售后',
+  navigationBarTitleText: '刻字定制',
   usingComponents: {
     'van-button': '@vant/weapp/button/index',
     'van-field': '@vant/weapp/field/index',
-    'van-icon': '@vant/weapp/icon/index',
-    'van-loading': '@vant/weapp/loading/index',
   },
 })
